@@ -110,11 +110,17 @@ $(function () {
       return api('apiParentLineLogin', [idToken]).then(function (res) {
         var kids = res.data.children || [];
         if (!kids.length) {
-          fatal('บัญชี LINE นี้ยังไม่ได้ผูกกับข้อมูลเด็ก กรุณาเปิดลิงก์ที่ได้รับจากศูนย์');
+          renderPhoneBind();
           return;
         }
         if (kids.length === 1) { APP.token = kids[0].portal_token; load(); return; }
         pickChild(kids);
+      }).catch(function (err) {
+        if (String(err.message || '').indexOf('ยังไม่ได้ผูก') !== -1) {
+          renderPhoneBind();
+          return;
+        }
+        throw err;
       });
     })
     .catch(function (err) {
@@ -123,6 +129,36 @@ $(function () {
       fatal('เชื่อมต่อ LINE ไม่สำเร็จ: ' + err.message);
     });
 });
+
+function renderPhoneBind() {
+  $('#app').html('<div class="wrap"><div class="head"><div class="center-name">ผูกบัญชีผู้ปกครอง</div>' +
+    '<div class="small text-muted">กรอกเบอร์โทรที่ลงทะเบียนไว้กับศูนย์</div></div>' +
+    '<div class="card-x"><div class="card-x-body">' +
+    '<label class="form-label">เบอร์โทรผู้ปกครอง</label>' +
+    '<input id="bindPhone" class="form-control" type="tel" inputmode="tel" autocomplete="tel" placeholder="เช่น 0812345678">' +
+    '<div class="small text-muted mt-2">เบอร์ต้องตรงกับข้อมูลที่ศูนย์บันทึกไว้ หากเป็นเบอร์ร่วมหลายรายการให้ใช้ลิงก์ส่วนตัวแทน</div>' +
+    '<button id="btnBindPhone" class="btn btn-primary w-100 mt-3">ผูกบัญชีกับ LINE</button>' +
+    '<div id="bindPhoneMsg" class="small mt-2"></div>' +
+    '</div></div></div>');
+
+  $('#btnBindPhone').on('click', function () {
+    var $btn = $(this), phone = String($('#bindPhone').val() || '').trim();
+    if (!phone) { $('#bindPhoneMsg').text('กรุณากรอกเบอร์โทร').removeClass('text-success').addClass('text-danger'); return; }
+    $btn.prop('disabled', true).text('กำลังตรวจสอบ…');
+    $('#bindPhoneMsg').text('').removeClass('text-danger text-success');
+    api('apiParentBindPhone', [phone, liff.getIDToken()])
+      .then(function () { return api('apiParentLineLogin', [liff.getIDToken()]); })
+      .then(function (res) {
+        var kids = res.data.children || [];
+        if (kids.length === 1) { APP.token = kids[0].portal_token; load(); return; }
+        pickChild(kids);
+      })
+      .catch(function (err) {
+        $btn.prop('disabled', false).text('ผูกบัญชีกับ LINE');
+        $('#bindPhoneMsg').text(err.message).removeClass('text-success').addClass('text-danger');
+      });
+  });
+}
 
 function pickChild(kids) {
   $('#app').html('<div class="wrap"><div class="head"><div class="center-name">เลือกบุตรหลาน</div></div>' +
