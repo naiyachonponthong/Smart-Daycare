@@ -40,6 +40,13 @@ function fmtDate(iso) {
   return d.getDate() + ' ' + m[d.getMonth()] + ' ' + (d.getFullYear() + 543);
 }
 
+function monthLabel(month) {
+  var parts = String(month || '').split('-');
+  var y = Number(parts[0]), m = Number(parts[1]);
+  var names = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  return y && m >= 1 && m <= 12 ? names[m - 1] + ' พ.ศ. ' + (y + 543) : String(month || '-');
+}
+
 function todayStr() {
   var d = new Date();
   return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
@@ -230,13 +237,13 @@ function renderTab() {
     var gs = d.growth_summary || {};
     var latestGrowth = gs.latest;
     var growthBody = latestGrowth
-      ? '<div class="kv"><div class="kv-k">เดือนล่าสุด</div><div>' + esc(latestGrowth.month || '-') + '</div></div>' +
+      ? '<div class="kv"><div class="kv-k">เดือนล่าสุด</div><div>' + esc(monthLabel(latestGrowth.month)) + '</div></div>' +
         '<div class="kv"><div class="kv-k">น้ำหนัก</div><div>' + (latestGrowth.weight_kg === null || latestGrowth.weight_kg === undefined ? '-' : esc(latestGrowth.weight_kg) + ' กก.') + '</div></div>' +
         '<div class="kv"><div class="kv-k">ส่วนสูง</div><div>' + (latestGrowth.height_cm === null || latestGrowth.height_cm === undefined ? '-' : esc(latestGrowth.height_cm) + ' ซม.') + '</div></div>' +
         '<div class="kv"><div class="kv-k">บันทึกสะสม</div><div>' + esc(gs.count || 0) + ' เดือน</div></div>' +
-        (gs.weight_change !== null || gs.height_change !== null ? '<div style="font-size:.8rem;color:var(--muted);margin-top:6px">เทียบครั้งก่อน: ' + (gs.weight_change === null ? '-' : (gs.weight_change >= 0 ? '+' : '') + esc(gs.weight_change) + ' กก.') + ' / ' + (gs.height_change === null ? '-' : (gs.height_change >= 0 ? '+' : '') + esc(gs.height_change) + ' ซม.') + '</div>' : '') +
+        (gs.weight_change !== null && gs.weight_change !== undefined || gs.height_change !== null && gs.height_change !== undefined ? '<div style="font-size:.8rem;color:var(--muted);margin-top:6px">เทียบครั้งก่อน: ' + (gs.weight_change === null || gs.weight_change === undefined ? '-' : (gs.weight_change >= 0 ? '+' : '') + esc(gs.weight_change) + ' กก.') + ' / ' + (gs.height_change === null || gs.height_change === undefined ? '-' : (gs.height_change >= 0 ? '+' : '') + esc(gs.height_change) + ' ซม.') + '</div>' : '') +
         (d.growth && d.growth.length > 1 ? '<div class="mt-2" style="font-size:.8rem;color:var(--muted)">' + d.growth.slice(0, 6).map(function (g) {
-          return '<span class="chip" style="margin:2px;display:inline-block">' + esc(g.month || '-') + ': ' + (g.weight_kg === null || g.weight_kg === undefined ? '-' : esc(g.weight_kg) + ' กก.') + ' / ' + (g.height_cm === null || g.height_cm === undefined ? '-' : esc(g.height_cm) + ' ซม.') + '</span>';
+          return '<span class="chip" style="margin:2px;display:inline-block">' + esc(monthLabel(g.month)) + ': ' + (g.weight_kg === null || g.weight_kg === undefined ? '-' : esc(g.weight_kg) + ' กก.') + ' / ' + (g.height_cm === null || g.height_cm === undefined ? '-' : esc(g.height_cm) + ' ซม.') + '</span>';
         }).join('') + '</div>' : '')
       : '<div style="font-size:.85rem;color:var(--muted)">ยังไม่มีบันทึกน้ำหนักส่วนสูงรายเดือน</div>';
     var growth = card('การเจริญเติบโต', growthBody);
