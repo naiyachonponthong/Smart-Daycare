@@ -83,7 +83,12 @@ $(function () {
     return;
   }
 
+  var bindTokenKey = 'SD_PARENT_BIND_TOKEN';
   var urlToken = new URLSearchParams(location.search).get('t');
+  try {
+    if (urlToken) sessionStorage.setItem(bindTokenKey, urlToken);
+    else urlToken = sessionStorage.getItem(bindTokenKey) || '';
+  } catch (e) { /* sessionStorage may be unavailable in restricted browsers */ }
 
   liff.init({ liffId: SD_CONFIG.LIFF_ID })
     .then(function () {
@@ -94,6 +99,10 @@ $(function () {
         // เปิดครั้งแรกจากลิงก์ที่ศูนย์ส่งให้ ผูกบัญชี LINE ไว้เลย
         APP.token = urlToken;
         return api('apiParentBindLine', [urlToken, idToken])
+          .then(function (res) {
+            try { sessionStorage.removeItem(bindTokenKey); } catch (e) { /* ignore */ }
+            return res;
+          })
           .catch(function () { /* ผูกไม่สำเร็จก็ยังดูข้อมูลได้ */ })
           .then(load);
       }
