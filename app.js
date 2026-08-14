@@ -373,7 +373,8 @@ function renderTab() {
         (d.center.phone ? '<div class="kv"><div class="kv-k">โทรศัพท์</div>' +
           '<div><a href="tel:' + esc(d.center.phone) + '">' + esc(d.center.phone) + '</a></div></div>' : '') +
         (d.guardian.line_linked ? '<div class="kv"><div class="kv-k">การแจ้งเตือน</div>' +
-          '<div><span class="pill pill-ok">ผูกบัญชี LINE แล้ว</span></div></div>' : '')));
+          '<div><span class="pill pill-ok">ผูกบัญชี LINE แล้ว</span></div></div>' : '')) +
+      card('วิธีใช้งาน', '<div style="font-size:.85rem;color:var(--muted)">เปิดหน้านี้จาก LINE เพื่อดูข้อมูลที่ศูนย์เปิดให้ · การลาแจ้งได้ทันทีโดยไม่ต้องรออนุมัติ · การเพิ่มผู้รับเด็กจะรอเจ้าหน้าที่ตรวจสอบ · หากเน็ตหลุด ระบบจะแสดงข้อมูลล่าสุดที่โหลดไว้และจะส่งรายการใหม่เมื่อกลับมาออนไลน์</div>'));
 
     $('#lvGo').on('click', function () {
       var reason = $('#lvReason').val();
