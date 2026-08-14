@@ -3,11 +3,12 @@
    โฮสต์เป็นไฟล์ static เช่น GitHub Pages แล้วเรียก Apps Script เป็น API
    ============================================================ */
 
-var APP = { token: null, data: null, tab: 'today' };
+var APP = { token: null, data: null, tab: 'today', cacheKey: 'SD_PARENT_HOME_CACHE' };
 
 /* ---------- เรียก API ---------- */
 /* ส่งเป็น text/plain เพื่อเลี่ยง preflight ที่ Apps Script ตอบไม่ได้ */
 function api(fn, args) {
+  if (navigator.onLine === false) return Promise.reject(new Error('ออฟไลน์อยู่ กรุณาเชื่อมต่ออินเทอร์เน็ตก่อน'));
   return fetch(SD_CONFIG.API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -76,8 +77,21 @@ function fatal(msg) {
   $('#app').html('<div class="wrap">' + empty('bi-exclamation-triangle', 'เปิดหน้านี้ไม่ได้', msg) + '</div>');
 }
 
+function canView(key) {
+  var list = APP.data && APP.data.guardian && APP.data.guardian.visible_sections;
+  return !Array.isArray(list) || list.indexOf(key) !== -1;
+}
+
+function offlineBanner() {
+  if (!$('#offlineBanner').length) $('body').prepend('<div id="offlineBanner" class="alert alert-warning rounded-0 mb-0 py-2 text-center small d-none"><i class="bi bi-wifi-off me-1"></i>ออฟไลน์: กำลังแสดงข้อมูลล่าสุดที่บันทึกไว้ การลาและคำขอเพิ่มผู้รับเด็กจะส่งเมื่อกลับมาออนไลน์</div>');
+  $('#offlineBanner').toggleClass('d-none', navigator.onLine !== false);
+}
+
 /* ---------- เริ่มทำงาน ---------- */
 $(function () {
+  offlineBanner();
+  window.addEventListener('offline', offlineBanner);
+  window.addEventListener('online', offlineBanner);
   if (!SD_CONFIG.API_URL || SD_CONFIG.API_URL.indexOf('http') !== 0) {
     fatal('ยังไม่ได้ตั้งค่า API_URL ในไฟล์ config.js');
     return;
@@ -179,15 +193,23 @@ function load() {
 
   api('apiParentHome', [APP.token]).then(function (res) {
     APP.data = res.data;
+    try { localStorage.setItem(APP.cacheKey, JSON.stringify({ saved_at: new Date().toISOString(), data: APP.data })); } catch (e) { /* ignore */ }
     render();
-  }).catch(function (e) { fatal(e.message); });
+  }).catch(function (e) {
+    try {
+      var cached = JSON.parse(localStorage.getItem(APP.cacheKey) || 'null');
+      if (cached && cached.data) { APP.data = cached.data; render(); toast('กำลังแสดงข้อมูลล่าสุดที่โหลดไว้'); return; }
+    } catch (ignore) { /* ignore */ }
+    fatal(e.message);
+  });
 }
 
 function render() {
   var d = APP.data, c = d.child;
 
-  var status = d.today.status
-    ? '<span class="pill ' + attTone(d.today.status) + '">' + esc(d.today.status) + '</span>'
+  var today = d.today || {};
+  var status = today.status
+    ? '<span class="pill ' + attTone(today.status) + '">' + esc(today.status) + '</span>'
     : '<span class="pill pill-mute">ยังไม่มีการบันทึกวันนี้</span>';
 
   var head = '<div class="head">' +
@@ -201,8 +223,8 @@ function render() {
     '<div class="child-name">' + esc(c.name) + '</div>' +
     '<div class="child-sub">' + esc(c.room_name || '-') + ' · อายุ ' + esc(c.age_text) + '</div>' +
     '<div style="margin-top:4px">' + status +
-    (d.today.check_in ? ' <span style="font-size:.8rem">เข้า ' + esc(d.today.check_in) + '</span>' : '') +
-    (d.today.check_out ? ' <span style="font-size:.8rem">กลับ ' + esc(d.today.check_out) + '</span>' : '') +
+    (today.check_in ? ' <span style="font-size:.8rem">เข้า ' + esc(today.check_in) + '</span>' : '') +
+    (today.check_out ? ' <span style="font-size:.8rem">กลับ ' + esc(today.check_out) + '</span>' : '') +
     '</div></div></div></div>';
 
   var tabs = [
@@ -211,7 +233,7 @@ function render() {
     ['health', 'bi-heart-pulse', 'สุขภาพ'],
     ['photos', 'bi-images', 'ภาพ'],
     ['more', 'bi-three-dots', 'เพิ่มเติม']
-  ];
+  ].filter(function (t) { return t[0] === 'today' || t[0] === 'more' || (t[0] === 'daily' && canView('daily')) || (t[0] === 'health' && (canView('health') || canView('growth'))) || (t[0] === 'photos' && canView('photos')); });
 
   $('#app').html('<div class="wrap" style="padding:0">' + head +
     '<div style="padding:14px 12px 0" id="body"></div></div>' +
@@ -238,14 +260,14 @@ function renderTab() {
     if (c.allergy) alerts += '<div class="alert-x danger">แพ้: ' + esc(c.allergy) + '</div>';
     if (c.chronic) alerts += '<div class="alert-x warn">โรคประจำตัว: ' + esc(c.chronic) + '</div>';
 
-    var meals = d.meals.length
+    var meals = canView('meals') && d.meals.length
       ? d.meals.map(function (m) {
           return '<div class="kv"><div class="kv-k">' + esc(m.meal_type) + '</div>' +
             '<div>' + esc(m.menu) + '</div></div>';
         }).join('')
       : '<div style="font-size:.85rem;color:var(--muted)">ยังไม่มีข้อมูลเมนูของวันนี้</div>';
 
-    var recent = d.attendance.slice(0, 7).map(function (a) {
+    var recent = canView('attendance') && d.attendance.slice(0, 7).map(function (a) {
       return '<div class="kv"><div class="kv-k">' + fmtDate(a.date) + '</div>' +
         '<div><span class="pill ' + attTone(a.status) + '">' + esc(a.status || '-') + '</span>' +
         (a.check_in ? ' <span style="font-size:.8rem;color:var(--muted)">' + esc(a.check_in) +
