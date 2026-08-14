@@ -227,6 +227,19 @@ function renderTab() {
   }
 
   if (APP.tab === 'health') {
+    var gs = d.growth_summary || {};
+    var latestGrowth = gs.latest;
+    var growthBody = latestGrowth
+      ? '<div class="kv"><div class="kv-k">เดือนล่าสุด</div><div>' + esc(latestGrowth.month || '-') + '</div></div>' +
+        '<div class="kv"><div class="kv-k">น้ำหนัก</div><div>' + (latestGrowth.weight_kg === null || latestGrowth.weight_kg === undefined ? '-' : esc(latestGrowth.weight_kg) + ' กก.') + '</div></div>' +
+        '<div class="kv"><div class="kv-k">ส่วนสูง</div><div>' + (latestGrowth.height_cm === null || latestGrowth.height_cm === undefined ? '-' : esc(latestGrowth.height_cm) + ' ซม.') + '</div></div>' +
+        '<div class="kv"><div class="kv-k">บันทึกสะสม</div><div>' + esc(gs.count || 0) + ' เดือน</div></div>' +
+        (gs.weight_change !== null || gs.height_change !== null ? '<div style="font-size:.8rem;color:var(--muted);margin-top:6px">เทียบครั้งก่อน: ' + (gs.weight_change === null ? '-' : (gs.weight_change >= 0 ? '+' : '') + esc(gs.weight_change) + ' กก.') + ' / ' + (gs.height_change === null ? '-' : (gs.height_change >= 0 ? '+' : '') + esc(gs.height_change) + ' ซม.') + '</div>' : '') +
+        (d.growth && d.growth.length > 1 ? '<div class="mt-2" style="font-size:.8rem;color:var(--muted)">' + d.growth.slice(0, 6).map(function (g) {
+          return '<span class="chip" style="margin:2px;display:inline-block">' + esc(g.month || '-') + ': ' + (g.weight_kg === null || g.weight_kg === undefined ? '-' : esc(g.weight_kg) + ' กก.') + ' / ' + (g.height_cm === null || g.height_cm === undefined ? '-' : esc(g.height_cm) + ' ซม.') + '</span>';
+        }).join('') + '</div>' : '')
+      : '<div style="font-size:.85rem;color:var(--muted)">ยังไม่มีบันทึกน้ำหนักส่วนสูงรายเดือน</div>';
+    var growth = card('การเจริญเติบโต', growthBody);
     var dev = d.development.length
       ? card('ผลประเมินพัฒนาการ', d.development.map(function (p) {
           return '<div style="margin-bottom:10px"><div style="font-weight:600;font-size:.88rem">' +
@@ -238,7 +251,7 @@ function renderTab() {
         }).join(''))
       : '';
 
-    $b.html((d.health.length
+    $b.html(growth + (d.health.length
       ? card('บันทึกสุขภาพ', d.health.map(function (h) {
           var tone = h.severity === 'ฉุกเฉิน' ? 'pill-danger' : (h.severity === 'ต้องติดตาม' ? 'pill-warn' : 'pill-info');
           return '<div style="padding:9px 0;border-bottom:1px solid #F2F5F3">' +
