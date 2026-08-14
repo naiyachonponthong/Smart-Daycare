@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>สำหรับผู้ปกครอง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<style>
+:root{
+  --brand:#163B2E; --brand-soft:#E8F1EC; --primary:#1E7A55;
+  --ok:#16A34A; --warn:#F59E0B; --danger:#DC2626; --info:#0EA5E9;
+  --line:#E3E8E5; --muted:#6B7A73; --text:#1B2420;
+}
+body{ font-family:'Sarabun',system-ui,sans-serif; background:#F2F5F3; color:var(--text);
+  font-size:15px; padding-bottom:76px; margin:0; }
+.wrap{ max-width:620px; margin:0 auto; padding:0 12px 20px; }
+.head{ background:var(--brand); color:#fff; padding:14px 16px 18px; border-radius:0 0 18px 18px; }
+.center-row{ display:flex; align-items:center; gap:10px; }
+.logo{ width:36px; height:36px; border-radius:9px; object-fit:cover; background:#fff; }
+.center-name{ font-weight:700; font-size:.98rem; }
+.center-sub{ font-size:.76rem; color:#A9C4B8; }
+.child{ display:flex; gap:12px; align-items:center; background:#fff; color:var(--text);
+  border-radius:13px; padding:12px; margin-top:13px; }
+.ava{ width:62px; height:62px; flex:0 0 62px; border-radius:14px; overflow:hidden;
+  background:var(--brand-soft); color:var(--brand); display:flex; align-items:center;
+  justify-content:center; font-weight:700; font-size:1.4rem; }
+.ava img{ width:100%; height:100%; object-fit:cover; }
+.child-name{ font-weight:700; font-size:1.05rem; color:var(--brand); }
+.child-sub{ font-size:.79rem; color:var(--muted); }
+.card-x{ background:#fff; border:1px solid var(--line); border-radius:12px;
+  margin-bottom:14px; overflow:hidden; }
+.card-x-head{ background:var(--brand-soft); padding:9px 15px; font-weight:600;
+  font-size:.92rem; color:var(--brand); }
+.card-x-body{ padding:14px; }
+.pill{ display:inline-block; padding:2px 10px; border-radius:999px; font-size:.76rem; font-weight:500; }
+.pill-ok{ background:#E7F6ED; color:#12703C; }
+.pill-warn{ background:#FEF3E2; color:#A66207; }
+.pill-danger{ background:#FDE9E9; color:#B01B1B; }
+.pill-info{ background:#E5F5FD; color:#0B6E96; }
+.pill-mute{ background:#F0F2F1; color:#5C6B64; }
+.kv{ display:flex; gap:10px; padding:6px 0; border-bottom:1px solid #F2F5F3; font-size:.88rem; }
+.kv:last-child{ border-bottom:0; }
+.kv-k{ color:var(--muted); min-width:110px; }
+.chips{ display:flex; flex-wrap:wrap; gap:5px; }
+.chip{ background:#F1F4F2; color:#42504A; border-radius:999px; padding:2px 10px; font-size:.75rem; }
+.photos{ display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:8px; }
+.photos img{ width:100%; aspect-ratio:1; object-fit:cover; border-radius:9px; border:1px solid var(--line); }
+.alert-x{ border-radius:9px; padding:8px 12px; font-size:.83rem; margin-bottom:10px; }
+.alert-x.danger{ background:#FDE9E9; color:#B01B1B; }
+.alert-x.warn{ background:#FEF3E2; color:#A66207; }
+.tabs{ position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--line);
+  display:flex; z-index:50; padding-bottom:env(safe-area-inset-bottom); }
+.tab{ flex:1; border:0; background:none; padding:9px 2px 8px; color:var(--muted);
+  display:flex; flex-direction:column; align-items:center; gap:2px; font-size:.7rem; }
+.tab i{ font-size:1.15rem; }
+.tab.active{ color:var(--primary); font-weight:600; }
+.btn-primary{ background:var(--primary); border-color:var(--primary); }
+.empty{ text-align:center; padding:34px 14px; color:var(--muted); }
+.empty i{ font-size:2.4rem; opacity:.3; display:block; margin-bottom:8px; color:var(--brand); }
+.toast-x{ position:fixed; left:50%; transform:translateX(-50%); bottom:88px; z-index:100;
+  background:#1B2420; color:#fff; padding:9px 17px; border-radius:999px; font-size:.85rem;
+  max-width:88%; text-align:center; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="empty" style="padding-top:80px">
+    <div class="spinner-border text-secondary"></div>
+    <div class="mt-2" style="font-size:.85rem">กำลังเชื่อมต่อ…</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
