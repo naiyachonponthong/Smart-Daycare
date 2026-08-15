@@ -77,6 +77,41 @@ function fatal(msg) {
   $('#app').html('<div class="wrap">' + empty('bi-exclamation-triangle', 'เปิดหน้านี้ไม่ได้', msg) + '</div>');
 }
 
+// LIFF ID Token มีอายุจำกัด หากเปิดหน้าเดิมค้างไว้นาน LINE จะส่ง token เก่ากลับมา
+// ให้ล้างเซสชัน LIFF และเริ่มเข้าสู่ระบบใหม่หนึ่งครั้งแทนการค้างที่หน้า error
+var LIFF_REAUTH_KEY = 'SD_LIFF_REAUTH_ATTEMPT';
+
+function isExpiredLineTokenError(err) {
+  var msg = String(err && err.message || err || '');
+  return /IdToken expired|token expired|id.?token.*expired|หมดอายุ/i.test(msg);
+}
+
+function reauthenticateLine(err) {
+  if (!isExpiredLineTokenError(err) || !window.liff || typeof liff.login !== 'function') return false;
+  var alreadyRetried = false;
+  try {
+    alreadyRetried = sessionStorage.getItem(LIFF_REAUTH_KEY) === '1';
+  } catch (e) { /* ignore */ }
+  if (alreadyRetried) {
+    try { sessionStorage.removeItem(LIFF_REAUTH_KEY); } catch (e) { /* ignore */ }
+    fatal('เซสชัน LINE หมดอายุ กรุณาปิดหน้านี้แล้วเปิดจาก Rich Menu อีกครั้ง');
+    return true;
+  }
+  try { sessionStorage.setItem(LIFF_REAUTH_KEY, '1'); } catch (e) { /* ignore */ }
+  $('#app').html('<div class="empty" style="padding-top:80px"><div class="spinner-border text-secondary"></div>' +
+    '<div class="mt-2" style="font-size:.85rem">เซสชัน LINE หมดอายุ กำลังเชื่อมต่อใหม่…</div></div>');
+  try { if (typeof liff.isLoggedIn !== 'function' || liff.isLoggedIn()) liff.logout(); } catch (e) { /* ignore */ }
+  setTimeout(function () {
+    try { liff.login({ redirectUri: window.location.href }); }
+    catch (loginErr) { fatal('กรุณาเปิดหน้านี้จาก LINE อีกครั้ง'); }
+  }, 250);
+  return true;
+}
+
+function clearLineReauthAttempt() {
+  try { sessionStorage.removeItem(LIFF_REAUTH_KEY); } catch (e) { /* ignore */ }
+}
+
 function canView(key) {
   var list = APP.data && APP.data.guardian && APP.data.guardian.visible_sections;
   return !Array.isArray(list) || list.indexOf(key) !== -1;
@@ -114,6 +149,7 @@ $(function () {
         APP.token = urlToken;
         return api('apiParentBindLine', [urlToken, idToken])
           .then(function (res) {
+            clearLineReauthAttempt();
             try { sessionStorage.removeItem(bindTokenKey); } catch (e) { /* ignore */ }
             return res;
           })
@@ -122,6 +158,7 @@ $(function () {
       }
 
       return api('apiParentLineLogin', [idToken]).then(function (res) {
+        clearLineReauthAttempt();
         var kids = res.data.children || [];
         if (!kids.length) {
           renderPhoneBind();
@@ -140,6 +177,7 @@ $(function () {
     .catch(function (err) {
       // เปิดนอก LINE ยังใช้ลิงก์ส่วนตัวได้
       if (urlToken) { APP.token = urlToken; load(); return; }
+      if (reauthenticateLine(err)) return;
       fatal('เชื่อมต่อ LINE ไม่สำเร็จ: ' + err.message);
     });
 });
@@ -163,11 +201,13 @@ function renderPhoneBind() {
     api('apiParentBindPhone', [phone, liff.getIDToken()])
       .then(function () { return api('apiParentLineLogin', [liff.getIDToken()]); })
       .then(function (res) {
+        clearLineReauthAttempt();
         var kids = res.data.children || [];
         if (kids.length === 1) { APP.token = kids[0].portal_token; load(); return; }
         pickChild(kids);
       })
       .catch(function (err) {
+        if (reauthenticateLine(err)) return;
         $btn.prop('disabled', false).text('ผูกบัญชีกับ LINE');
         $('#bindPhoneMsg').text(err.message).removeClass('text-success').addClass('text-danger');
       });
@@ -387,3 +427,4 @@ function renderTab() {
     return;
   }
 }
+
